@@ -4,10 +4,6 @@ A collection of robust Munin plugins designed to monitor LiteSpeed Web Server. T
 
 Inspired by various community plugins and completely rewritten for robustness and cPanel compatibility.
 
-# Repository
-
-- https://github.com/SEU_USUARIO/SEU_REPOSITORIO
-
 # Plugins Included
 
 This repository contains the following plugins:
