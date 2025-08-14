@@ -1,0 +1,28 @@
+#!/usr/bin/sh
+# -*- sh -*-
+
+#%# family=manual
+#%# capabilities=autoconf
+
+log=${log:-/var/log/httpd/domains/*.log}
+
+if [ "$1" = "autoconf" ]; then
+        echo yes
+        exit 0
+fi
+
+if [ "$1" = "config" ]; then
+
+        echo "graph_title Litespeed POST requests";
+        echo "graph_args --base 1000 -l 0";
+        echo "graph_vlabel requests";
+        echo "graph_category Litespeed";
+            echo "requests.label POST";
+            echo "requests.type DERIVE";
+            echo "requests.min 0";
+            echo "requests.draw LINE2";
+            echo "requests.info The number of POST requests";
+        exit 0;
+fi
+
+echo -n "requests.value " && grep "POST" ${log} | wc -l

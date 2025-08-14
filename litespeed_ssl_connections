@@ -1,0 +1,49 @@
+#!/usr/local/cpanel/3rdparty/perl/536/bin/perl -w
+# -*- perl -*-
+
+# Plugin para monitorar conexões SSL do LiteSpeed
+
+use strict;
+use warnings;
+
+my $report_file = '/dev/shm/lsws/status/.rtreport';
+
+# Autoconfig
+if ( defined $ARGV[0] and $ARGV[0] eq "autoconf" ) {
+    if ( -e $report_file ) {
+        print "yes\n";
+        exit 0;
+    } else {
+        print "no (Arquivo de relatorio do LiteSpeed nao encontrado)\n";
+        exit 1;
+    }
+}
+
+# Config
+if ( defined $ARGV[0] and $ARGV[0] eq "config" ) {
+    print "graph_title Litespeed: Conexoes SSL\n";
+    print "graph_args --base 1000 -l 0\n";
+    print "graph_vlabel conexoes\n";
+    print "graph_category litespeed\n";
+    print "ssl_active.label Conexoes SSL Ativas\n";
+    print "ssl_active.type GAUGE\n";
+    print "ssl_active.draw AREA\n";
+    exit 0;
+}
+
+# Coleta de Dados
+my $ssl_active = 0;
+if ( -e $report_file ) {
+    if (open my $IN, "<", $report_file) {
+        while (my $line = <$IN>) {
+            if ($line =~ /SSLCONN: (\d+),/) {
+                $ssl_active = $1;
+                last;
+            }
+        }
+        close $IN;
+    }
+}
+
+print "ssl_active.value $ssl_active\n";
+exit 0;

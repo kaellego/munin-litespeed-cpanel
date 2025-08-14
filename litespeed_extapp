@@ -1,0 +1,59 @@
+#!/usr/local/cpanel/3rdparty/perl/536/bin/perl -w
+# -*- perl -*-
+
+# Plugin para monitorar o App Externo (LSPHP) do LiteSpeed
+
+use strict;
+use warnings;
+
+my $report_file = '/dev/shm/lsws/status/.rtreport';
+
+# Autoconfig
+if ( defined $ARGV[0] and $ARGV[0] eq "autoconf" ) {
+    if ( -e $report_file ) {
+        print "yes\n";
+        exit 0;
+    } else {
+        print "no (Arquivo de relatório do LiteSpeed nao encontrado)\n";
+        exit 1;
+    }
+}
+
+# Config
+if ( defined $ARGV[0] and $ARGV[0] eq "config" ) {
+    print "graph_title Litespeed: App Externo (LSPHP)\n";
+    print "graph_args --base 1000 -l 0\n";
+    print "graph_vlabel conexoes\n";
+    print "graph_category litespeed\n";
+    print "inuse.label Em Uso\n";
+    print "inuse.type GAUGE\n";
+    print "inuse.draw AREA\n";
+    print "idle.label Ociosas\n";
+    print "idle.type GAUGE\n";
+    print "idle.draw LINE1\n";
+    print "waitq.label Na Fila de Espera\n";
+    print "waitq.type GAUGE\n";
+    print "waitq.draw LINE2\n";
+    exit 0;
+}
+
+# Coleta de Dados
+my ($inuse, $idle, $waitq) = (0, 0, 0);
+if ( -e $report_file ) {
+    if (open my $IN, "<", $report_file) {
+        while (my $line = <$IN>) {
+            if ($line =~ /EXTAPP .*?: .*? INUSE_CONN: (\d+), IDLE_CONN: (\d+), WAITQUE_DEPTH: (\d+)/) {
+                $inuse = $1;
+                $idle  = $2;
+                $waitq = $3;
+                last;
+            }
+        }
+        close $IN;
+    }
+}
+
+print "inuse.value $inuse\n";
+print "idle.value $idle\n";
+print "waitq.value $waitq\n";
+exit 0;

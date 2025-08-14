@@ -1,0 +1,65 @@
+#!/usr/local/cpanel/3rdparty/perl/536/bin/perl -w
+# -*- perl -*-
+
+# Plugin to monitor LiteSpeed cache hits
+
+use strict;
+use warnings;
+
+my $report_file = '/dev/shm/lsws/status/.rtreport';
+
+# Autoconfig
+if ( defined $ARGV[0] and $ARGV[0] eq "autoconf" ) {
+    if ( -e $report_file ) {
+        print "yes\n";
+        exit 0;
+    } else {
+        print "no (LiteSpeed report file not found)\n";
+        exit 1;
+    }
+}
+
+# Config
+if ( defined $ARGV[0] and $ARGV[0] eq "config" ) {
+    print "graph_title Litespeed: Cache Hits\n";
+    print "graph_args --base 1000 -l 0\n";
+    print "graph_vlabel hits / second\n";
+    print "graph_category litespeed\n";
+    print "public.label Public Cache\n";
+    print "public.type COUNTER\n";
+    print "public.draw LINE1\n";
+    print "private.label Private Cache\n";
+    print "private.type COUNTER\n";
+    print "private.draw LINE2\n";
+    print "static.label Static Hits\n";
+    print "static.type COUNTER\n";
+    print "static.draw LINE3\n";
+    exit 0;
+}
+
+# Data Collection
+my ($public, $private, $static) = (0, 0, 0);
+
+if ( -e $report_file ) {
+    # Open the file safely
+    unless (open my $IN, "<", $report_file) {
+        warn "Could not open '$report_file': $!";
+        # We will exit gracefully, reporting 0
+    } else {
+        while (my $line = <$IN>) {
+            if ($line =~ /TOTAL_PUB_CACHE_HITS: (\d+),.*?TOTAL_PRIVATE_CACHE_HITS: (\d+),.*?TOTAL_STATIC_HITS: (\d+)/) {
+                $public  = $1;
+                $private = $2;
+                $static  = $3;
+                last;
+            }
+        }
+        close $IN;
+    }
+}
+
+print "public.value $public\n";
+print "private.value $private\n";
+print "static.value $static\n";
+
+exit 0;

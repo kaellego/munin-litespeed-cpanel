@@ -1,0 +1,75 @@
+#!/usr/local/cpanel/3rdparty/perl/536/bin/perl -w
+# -*- perl -*-
+
+# Plugin to monitor LiteSpeed throughput
+
+use strict;
+use warnings;
+
+my $report_file = '/dev/shm/lsws/status/.rtreport';
+
+# Autoconfig
+if ( defined $ARGV[0] and $ARGV[0] eq "autoconf" ) {
+    if ( -e $report_file ) {
+        print "yes\n";
+        exit 0;
+    } else {
+        print "no (LiteSpeed report file not found)\n";
+        exit 1;
+    }
+}
+
+# Config
+if ( defined $ARGV[0] and $ARGV[0] eq "config" ) {
+    print "graph_title LiteSpeed Throughput\n";
+    print "graph_args --base 1000 -l 0\n";
+    print "graph_vlabel bits per second\n";
+    print "graph_category litespeed\n";
+    print "graph_order bpsout bpsin\n";
+    
+    print "bpsout.label Saida\n";
+    print "bpsout.type DERIVE\n";
+    print "bpsout.min 0\n";
+    print "bpsout.cdef bpsout,8,*\n"; # Converts Bytes to bits
+    print "bpsout.draw AREA\n";
+    
+    print "bpsin.label Entrada\n";
+    print "bpsin.type DERIVE\n";
+    print "bpsin.min 0\n";
+    print "bpsin.cdef bpsin,8,*\n"; # Converts Bytes to bits
+    print "bpsin.draw LINE1\n";
+    exit 0;
+}
+
+# Data Collection
+my ($bpsin, $bpsout, $ssl_bpsin, $ssl_bpsout) = (0, 0, 0, 0);
+
+if ( -e $report_file ) {
+    # Open the file safely
+    unless (open my $IN, "<", $report_file) {
+        warn "Could not open '$report_file': $!";
+        # We will exit gracefully, reporting 0
+    } else {
+        while (my $line = <$IN>) {
+            # Extract traffic values (normal and SSL)
+            if ($line =~ /BPS_IN: (\d+), BPS_OUT: (\d+), SSL_BPS_IN: (\d+), SSL_BPS_OUT: (\d+)/) {
+                $bpsin      = $1;
+                $bpsout     = $2;
+                $ssl_bpsin  = $3;
+                $ssl_bpsout = $4;
+                last; # The necessary information is on a single line
+            }
+        }
+        close $IN;
+    }
+}
+
+# Sum normal and SSL traffic for the real total
+my $total_in = $bpsin + $ssl_bpsin;
+my $total_out = $bpsout + $ssl_bpsout;
+
+# Print the values in Bytes. Munin will handle the conversion to bits.
+print "bpsin.value $total_in\n";
+print "bpsout.value $total_out\n";
+
+exit 0;
