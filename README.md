@@ -24,7 +24,7 @@ The installation process for cPanel involves placing the scripts in the cPanel-m
 ```bash
 # 1. Clone the repository to a temporary location
 cd /root
-git clone [https://github.com/kaellego/munin-litespeed-cpanel.git] munin-litespeed-cpanel
+git clone https://github.com/kaellego/munin-litespeed-cpanel.git munin-litespeed-cpanel
 
 # 2. Move the plugin files to the cPanel munin directory
 sudo mv munin-litespeed-cpanel/litespeed_* /usr/local/cpanel/3rdparty/share/munin/plugins/
